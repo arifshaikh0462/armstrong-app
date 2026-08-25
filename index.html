@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Armstrong Number Visualizer — Interactive Code Learning</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            bg: '#0a0e17',
+            panel: '#111827',
+            panel2: '#1a2332',
+            border: '#1e293b',
+            accent: '#22d3ee',
+            accent2: '#a78bfa',
+            success: '#34d399',
+            danger: '#f87171',
+            warn: '#fbbf24',
+            code: '#0d1117',
+          },
+          fontFamily: {
+            mono: ['JetBrains Mono', 'Fira Code', 'ui-monospace', 'monospace'],
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body { background: #0a0e17; color: #e2e8f0; font-family: Inter, system-ui, sans-serif; }
+    .glass { background: rgba(17, 24, 39, 0.75); backdrop-filter: blur(12px); border: 1px solid rgba(30, 41, 59, 0.8); }
+    .code-line { transition: all 0.25s ease; border-left: 3px solid transparent; }
+    .code-line.active { background: rgba(34, 211, 238, 0.12); border-left-color: #22d3ee; box-shadow: inset 0 0 20px rgba(34, 211, 238, 0.08); }
+    .var-card { transition: all 0.3s ease; }
+    .var-card.changed { background: rgba(34, 211, 238, 0.15); border-color: #22d3ee; transform: scale(1.03); }
+    .timeline-step { transition: all 0.3s ease; }
+    .timeline-step.active { background: rgba(34, 211, 238, 0.2); border-color: #22d3ee; color: #22d3ee; }
+    .timeline-step.done { background: rgba(52, 211, 153, 0.1); border-color: #34d399; color: #34d399; }
+    .digit-fly { animation: digit-fly 0.6s ease-out forwards; }
+    @keyframes digit-fly {
+      0% { transform: translateY(0) scale(1); opacity: 1; }
+      100% { transform: translateY(-12px) scale(1.25); opacity: 0.95; }
+    }
+    .progress-bar { transition: width 0.4s ease; }
+    .btn-ctrl { transition: all 0.15s ease; }
+    .btn-ctrl:hover:not(:disabled) { transform: translateY(-1px); }
+    .btn-ctrl:disabled { opacity: 0.4; cursor: not-allowed; }
+    .scroll-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+    .scroll-thin::-webkit-scrollbar-track { background: #0d1117; }
+    .scroll-thin::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    .hl-kw { color: #c792ea; }
+    .hl-fn { color: #82aaff; }
+    .hl-str { color: #c3e88d; }
+    .hl-num { color: #f78c6c; }
+    .hl-op { color: #89ddff; }
+    .animate-fade { animation: fadeIn 0.35s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  </style>
+</head>
+<body class="min-h-screen">
+  <header class="border-b border-border bg-panel/80 sticky top-0 z-50 backdrop-blur-md">
+    <div class="max-w-[1600px] mx-auto px-4 py-3 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-cyan-400 to-violet-500 flex items-center justify-center text-bg font-bold text-sm">AN</div>
+        <div>
+          <h1 class="text-lg font-semibold tracking-tight text-white">Armstrong Number Visualizer</h1>
+          <p class="text-xs text-slate-400 hidden sm:block">See exactly how your Python code thinks</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 text-xs">
+        <span class="px-2 py-1 rounded bg-panel2 border border-border text-slate-400">Python</span>
+        <span class="px-2 py-1 rounded bg-panel2 border border-border text-slate-400">Interactive</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-[1600px] mx-auto px-4 py-6 space-y-6">
+    <section class="glass rounded-2xl p-6 md:p-8">
+      <div class="text-center mb-6">
+        <h2 class="text-2xl md:text-3xl font-bold text-white mb-2">ARMSTRONG NUMBER VISUALIZER</h2>
+        <p class="text-slate-400 max-w-2xl mx-auto">See exactly how your Python code thinks, calculates, and reaches the final answer — line by line, digit by digit.</p>
+      </div>
+      <div class="flex flex-col sm:flex-row gap-3 max-w-xl mx-auto items-stretch sm:items-center">
+        <div class="flex-1 relative">
+          <input id="numberInput" type="text" inputmode="numeric" placeholder="Enter any positive integer"
+            class="w-full bg-code border border-border rounded-xl px-4 py-3 text-lg font-mono text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition"
+            value="153" />
+          <div id="inputError" class="absolute -bottom-5 left-0 text-xs text-danger hidden"></div>
+        </div>
+        <div class="flex gap-2">
+          <button id="btnVisualize" class="btn-ctrl flex-1 sm:flex-none px-5 py-3 rounded-xl bg-accent text-bg font-semibold hover:bg-cyan-300 flex items-center justify-center gap-2">
+            ▶ Visualize
+          </button>
+          <button id="btnReset" class="btn-ctrl px-4 py-3 rounded-xl border border-border bg-panel2 text-slate-300 hover:bg-slate-700/50" title="Reset">↻</button>
+        </div>
+      </div>
+      <div class="mt-6 flex flex-wrap justify-center gap-2">
+        <span class="text-xs text-slate-500 self-center mr-1">Examples:</span>
+        <button class="example-btn px-3 py-1.5 rounded-lg text-sm font-mono border border-border bg-panel2 hover:border-accent hover:text-accent transition" data-n="153">153</button>
+        <button class="example-btn px-3 py-1.5 rounded-lg text-sm font-mono border border-border bg-panel2 hover:border-accent hover:text-accent transition" data-n="370">370</button>
+        <button class="example-btn px-3 py-1.5 rounded-lg text-sm font-mono border border-border bg-panel2 hover:border-accent hover:text-accent transition" data-n="9474">9474</button>
+        <button class="example-btn px-3 py-1.5 rounded-lg text-sm font-mono border border-border bg-panel2 hover:border-accent hover:text-accent transition" data-n="1634">1634</button>
+        <button class="example-btn px-3 py-1.5 rounded-lg text-sm font-mono border border-border bg-panel2 hover:border-accent hover:text-accent transition" data-n="123">123</button>
+        <button class="example-btn px-3 py-1.5 rounded-lg text-sm font-mono border border-border bg-panel2 hover:border-accent hover:text-accent transition" data-n="407">407</button>
+      </div>
+    </section>
+
+    <div class="flex gap-2 border-b border-border">
+      <button id="tabWithFn" class="mode-tab px-5 py-2.5 text-sm font-medium rounded-t-lg border-b-2 border-accent text-accent bg-panel/50">WITH FUNCTION</button>
+      <button id="tabWithoutFn" class="mode-tab px-5 py-2.5 text-sm font-medium rounded-t-lg border-b-2 border-transparent text-slate-400 hover:text-slate-200">WITHOUT FUNCTION</button>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-3 text-sm">
+      <span class="text-slate-400">Explanation:</span>
+      <div class="flex rounded-lg overflow-hidden border border-border">
+        <button class="level-btn px-3 py-1.5 bg-accent/20 text-accent" data-level="beginner">Beginner</button>
+        <button class="level-btn px-3 py-1.5 text-slate-400 hover:bg-panel2" data-level="intermediate">Intermediate</button>
+        <button class="level-btn px-3 py-1.5 text-slate-400 hover:bg-panel2" data-level="technical">Technical</button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-4">
+      <div class="xl:col-span-5 glass rounded-xl overflow-hidden flex flex-col min-h-[420px]">
+        <div class="flex items-center justify-between px-4 py-2.5 border-b border-border bg-code/80">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-red-500/80"></span>
+            <span class="w-3 h-3 rounded-full bg-yellow-500/80"></span>
+            <span class="w-3 h-3 rounded-full bg-green-500/80"></span>
+            <span class="ml-3 text-xs text-slate-400 font-mono">armstrong.py</span>
+          </div>
+          <span class="text-xs text-slate-500">Python</span>
+        </div>
+        <div id="codeEditor" class="flex-1 overflow-auto scroll-thin p-0 font-mono text-sm leading-relaxed bg-code"></div>
+      </div>
+
+      <div class="xl:col-span-4 space-y-4">
+        <div class="glass rounded-xl p-4 min-h-[200px]">
+          <h3 class="text-xs uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-accent"></span> Current Line Explanation
+          </h3>
+          <div id="explanationPanel" class="space-y-3">
+            <p class="text-slate-400 text-sm">Press <strong class="text-accent">Visualize</strong> to start the step-by-step execution.</p>
+          </div>
+        </div>
+        <div class="glass rounded-xl p-4">
+          <h3 class="text-xs uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-accent2"></span> Variable Memory
+          </h3>
+          <div id="varMemory" class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm font-mono"></div>
+        </div>
+      </div>
+
+      <div class="xl:col-span-3 space-y-4">
+        <div class="glass rounded-xl p-4">
+          <h3 class="text-xs uppercase tracking-wider text-slate-500 mb-3">Digit Extraction</h3>
+          <div id="digitViz" class="min-h-[100px] flex flex-col items-center justify-center text-center">
+            <p class="text-slate-500 text-sm">Waiting for execution…</p>
+          </div>
+        </div>
+        <div class="glass rounded-xl p-4">
+          <h3 class="text-xs uppercase tracking-wider text-slate-500 mb-3">Armstrong Calculation</h3>
+          <div id="calcViz" class="min-h-[120px] text-center text-sm">
+            <p class="text-slate-500">Powers will appear here</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div class="glass rounded-xl p-4">
+        <h3 class="text-xs uppercase tracking-wider text-slate-500 mb-3">While Loop</h3>
+        <div id="loopViz" class="space-y-2 text-sm">
+          <p class="text-slate-500">Loop iterations will appear here</p>
+        </div>
+        <div class="mt-3">
+          <div class="flex justify-between text-xs text-slate-500 mb-1">
+            <span>Iteration</span>
+            <span id="iterLabel">0 / 0</span>
+          </div>
+          <div class="h-1.5 bg-panel2 rounded-full overflow-hidden">
+            <div id="iterProgress" class="progress-bar h-full bg-accent rounded-full" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+      <div class="glass rounded-xl p-4">
+        <h3 class="text-xs uppercase tracking-wider text-slate-500 mb-3">Function / Call Stack</h3>
+        <div id="stackViz" class="text-sm font-mono space-y-2 min-h-[120px]">
+          <p class="text-slate-500">Stack frames appear in function mode</p>
+        </div>
+      </div>
+      <div class="glass rounded-xl p-4 flex flex-col">
+        <h3 class="text-xs uppercase tracking-wider text-slate-500 mb-3">Live Console</h3>
+        <div id="consoleOut" class="flex-1 bg-code rounded-lg p-3 font-mono text-xs text-slate-300 overflow-auto scroll-thin min-h-[140px] max-h-[200px] space-y-1">
+          <div class="text-slate-500">$ python armstrong.py</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="glass rounded-xl p-4 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <button id="btnPrev" class="btn-ctrl p-2.5 rounded-lg border border-border bg-panel2 text-slate-300 hover:bg-slate-700/50" title="Previous">⏮</button>
+        <button id="btnPlay" class="btn-ctrl p-2.5 rounded-lg bg-accent text-bg hover:bg-cyan-300" title="Play">
+          <span id="iconPlay">▶</span>
+          <span id="iconPause" class="hidden">⏸</span>
+        </button>
+        <button id="btnNext" class="btn-ctrl p-2.5 rounded-lg border border-border bg-panel2 text-slate-300 hover:bg-slate-700/50" title="Next">⏭</button>
+        <button id="btnRestart" class="btn-ctrl p-2.5 rounded-lg border border-border bg-panel2 text-slate-300 hover:bg-slate-700/50" title="Restart">↻</button>
+      </div>
+      <div class="flex items-center gap-3 text-sm">
+        <span class="text-slate-400">Speed</span>
+        <div class="flex rounded-lg overflow-hidden border border-border">
+          <button class="speed-btn px-2.5 py-1 text-xs text-slate-400 hover:bg-panel2" data-speed="0.5">0.5x</button>
+          <button class="speed-btn px-2.5 py-1 text-xs bg-accent/20 text-accent" data-speed="1">1x</button>
+          <button class="speed-btn px-2.5 py-1 text-xs text-slate-400 hover:bg-panel2" data-speed="1.5">1.5x</button>
+          <button class="speed-btn px-2.5 py-1 text-xs text-slate-400 hover:bg-panel2" data-speed="2">2x</button>
+          <button class="speed-btn px-2.5 py-1 text-xs text-slate-400 hover:bg-panel2" data-speed="4">4x</button>
+        </div>
+      </div>
+      <div class="text-sm text-slate-400">
+        Step <span id="stepCounter" class="text-white font-mono">0</span> / <span id="stepTotal" class="font-mono">0</span>
+      </div>
+    </div>
+
+    <div class="glass rounded-xl p-4 overflow-x-auto scroll-thin">
+      <h3 class="text-xs uppercase tracking-wider text-slate-500 mb-3">Execution Timeline</h3>
+      <div id="timeline" class="flex gap-2 min-w-max pb-1 items-center"></div>
+    </div>
+
+    <div id="resultBanner" class="hidden glass rounded-xl p-6 text-center animate-fade">
+      <div id="resultContent"></div>
+    </div>
+
+    <section class="glass rounded-xl p-6">
+      <h3 class="text-lg font-semibold text-white mb-4">With Function vs Without Function</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left">
+          <thead>
+            <tr class="border-b border-border text-slate-400">
+              <th class="py-2 pr-4">Feature</th>
+              <th class="py-2 pr-4 text-accent">With Function</th>
+              <th class="py-2">Without Function</th>
+            </tr>
+          </thead>
+          <tbody class="text-slate-300">
+            <tr class="border-b border-border/50"><td class="py-2.5 pr-4">Function Definition</td><td class="pr-4 text-success">Yes</td><td>No</td></tr>
+            <tr class="border-b border-border/50"><td class="py-2.5 pr-4">Function Call</td><td class="pr-4 text-success">Yes</td><td>No</td></tr>
+            <tr class="border-b border-border/50"><td class="py-2.5 pr-4">Reusable Logic</td><td class="pr-4 text-success">Yes</td><td class="text-warn">Limited</td></tr>
+            <tr class="border-b border-border/50"><td class="py-2.5 pr-4">Execution Model</td><td class="pr-4">Function stack frame</td><td>Direct sequential</td></tr>
+            <tr class="border-b border-border/50"><td class="py-2.5 pr-4">Beginner Friendly</td><td class="pr-4 text-success">Yes</td><td class="text-success">Yes</td></tr>
+            <tr><td class="py-2.5 pr-4">Best For</td><td class="pr-4">Reusable checks, larger programs</td><td>Simple scripts, learning basics</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="glass rounded-xl p-6">
+      <h3 class="text-lg font-semibold text-white mb-4">How Armstrong Numbers Work</h3>
+      <ol class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
+        <li class="flex gap-3 p-3 rounded-lg bg-panel2 border border-border"><span class="text-accent font-mono font-bold">1</span><span>Store original number in <code class="text-accent2">n1</code></span></li>
+        <li class="flex gap-3 p-3 rounded-lg bg-panel2 border border-border"><span class="text-accent font-mono font-bold">2</span><span>Count digits via <code class="text-accent2">str</code> + <code class="text-accent2">len</code></span></li>
+        <li class="flex gap-3 p-3 rounded-lg bg-panel2 border border-border"><span class="text-accent font-mono font-bold">3</span><span>Extract each digit with <code class="text-accent2">% 10</code></span></li>
+        <li class="flex gap-3 p-3 rounded-lg bg-panel2 border border-border"><span class="text-accent font-mono font-bold">4</span><span>Raise digit to power of digit count</span></li>
+        <li class="flex gap-3 p-3 rounded-lg bg-panel2 border border-border"><span class="text-accent font-mono font-bold">5</span><span>Accumulate into sum <code class="text-accent2">s</code></span></li>
+        <li class="flex gap-3 p-3 rounded-lg bg-panel2 border border-border"><span class="text-accent font-mono font-bold">6</span><span>Remove digit with <code class="text-accent2">// 10</code></span></li>
+        <li class="flex gap-3 p-3 rounded-lg bg-panel2 border border-border"><span class="text-accent font-mono font-bold">7</span><span>Compare sum with original</span></li>
+        <li class="flex gap-3 p-3 rounded-lg bg-panel2 border border-border"><span class="text-accent font-mono font-bold">8</span><span>Print Armstrong / Not Armstrong</span></li>
+      </ol>
+    </section>
+
+    <section class="glass rounded-xl p-6">
+      <h3 class="text-lg font-semibold text-white mb-4">Operators Used</h3>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <button class="op-btn text-left p-4 rounded-xl border border-border bg-panel2 hover:border-accent transition" data-op="%">
+          <div class="font-mono text-accent text-lg">%</div>
+          <div class="text-sm text-slate-300 mt-1">Modulo — remainder after division</div>
+        </button>
+        <button class="op-btn text-left p-4 rounded-xl border border-border bg-panel2 hover:border-accent transition" data-op="//">
+          <div class="font-mono text-accent text-lg">//</div>
+          <div class="text-sm text-slate-300 mt-1">Floor division — integer quotient</div>
+        </button>
+        <button class="op-btn text-left p-4 rounded-xl border border-border bg-panel2 hover:border-accent transition" data-op="**">
+          <div class="font-mono text-accent text-lg">**</div>
+          <div class="text-sm text-slate-300 mt-1">Exponentiation — power</div>
+        </button>
+        <button class="op-btn text-left p-4 rounded-xl border border-border bg-panel2 hover:border-accent transition" data-op="str/len">
+          <div class="font-mono text-accent text-lg">str / len</div>
+          <div class="text-sm text-slate-300 mt-1">Convert to string & count digits</div>
+        </button>
+      </div>
+      <div id="opExplain" class="mt-4 p-4 rounded-lg bg-code border border-border text-sm text-slate-300 hidden"></div>
+    </section>
+  </main>
+
+  <footer class="border-t border-border mt-12 py-6 text-center text-xs text-slate-500">
+    Armstrong Number Visualizer · Interactive Python execution engine · Educational tool
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
